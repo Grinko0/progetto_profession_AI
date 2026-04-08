@@ -1,0 +1,8 @@
+# Ignora i modelli salvati (troppo pesanti per GitHub)
+saved_model/
+src/saved_model/
+
+# Ignora i grafici e i dati temporanei
+plots/
+__pycache__/
+*.pyc

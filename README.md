@@ -38,6 +38,6 @@ L'applicazione in produzione utilizza la libreria **Gradio** per fornire un'inte
 
 # Progetto di Sentiment Analysis e Architettura MLOps - MachineInnovators Inc.
 
-> 🚀 **Demo Live:** Puoi testare il modello in tempo reale qui: [Sentiment Analysis App su Hugging Face Spaces](https://grinko-sentiment-analysis-mlops.hf.space)
+> Modello su Hugging Face: [Sentiment Analysis App su Hugging Face Spaces](https://grinko-sentiment-analysis-mlops.hf.space)
 
 Questo repository ospita il codice sorgente...

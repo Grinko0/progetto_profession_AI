@@ -35,3 +35,9 @@ Questo approccio garantisce che nessuna modifica al codice possa essere integrat
 In conformità con i principi di microservizi e separazione delle responsabilità (decoupling), il repository GitHub è stato dedicato esclusivamente al versionamento del codice e ai test. Il deployment dell'applicazione finale è stato invece affidato a un'infrastruttura cloud esterna ottimizzata per il Machine Learning: **Hugging Face Spaces**.
 
 L'applicazione in produzione utilizza la libreria **Gradio** per fornire un'interfaccia utente web accessibile e interattiva. Il server istanzia dinamicamente la pipeline di inferenza, recupera il modello RoBERTa e permette l'elaborazione del sentiment in tempo reale, restituendo all'utente una valutazione probabilistica (Confidence Score) associata alla classe di appartenenza.
+
+# Progetto di Sentiment Analysis e Architettura MLOps - MachineInnovators Inc.
+
+> 🚀 **Demo Live:** Puoi testare il modello in tempo reale qui: [Sentiment Analysis App su Hugging Face Spaces](https://grinko-sentiment-analysis-mlops.hf.space)
+
+Questo repository ospita il codice sorgente...

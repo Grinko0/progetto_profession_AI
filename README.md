@@ -40,4 +40,4 @@ L'applicazione in produzione utilizza la libreria **Gradio** per fornire un'inte
 
 > Modello su Hugging Face: [Sentiment Analysis App su Hugging Face Spaces](https://grinko-sentiment-analysis-mlops.hf.space)
 
-Questo repository ospita il codice sorgente...
+

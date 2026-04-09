@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: 1. Checkout del codice dal Repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: 2. Setup di Python (Versione 3.10)
       uses: actions/setup-python@v4
@@ -48,7 +48,7 @@ jobs:
 
     - name: 7. Salvataggio degli artefatti (Grafici e Modello)
       # Salviamo i file generati per poterli scaricare e analizzare
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: mlops-artifacts
         path: |

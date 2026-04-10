@@ -7,3 +7,5 @@ datasets
 evaluate
 scikit-learn
 tqdm
+gradio==4.44.1
+huggingface_hub==0.25.2

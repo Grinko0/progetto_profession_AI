@@ -1,3 +1,15 @@
+---
+title: Sentiment Analysis MLOps
+emoji: 📊
+colorFrom: blue
+colorTo: indigo
+sdk: gradio
+sdk_version: 4.44.1
+app_file: app.py
+pinned: false
+---
+
+
 # Progetto di Sentiment Analysis e Architettura MLOps - MachineInnovators Inc.
 
 Questo repository ospita il codice sorgente e l'infrastruttura architetturale per un sistema avanzato di Sentiment Analysis. Il progetto nasce con il duplice obiettivo di sviluppare un modello di Natural Language Processing (NLP) altamente accurato per l'analisi dei testi provenienti dai social media e, contestualmente, di ingegnerizzarne il ciclo di vita seguendo i paradigmi fondanti del Machine Learning Operations (MLOps). L'intera infrastruttura è stata progettata per garantire scalabilità, riproducibilità e automazione dei processi di test e rilascio.

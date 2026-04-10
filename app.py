@@ -25,26 +25,28 @@ def predict(text):
     results = analyzer(text)[0]
     return f"Sentiment: {results['label']} (Confidenza: {results['score']:.2%})"
 
-# FUNZIONE DI LOGGING MANUALE (Più sicura per Hugging Face)
+# FUNZIONE DI LOGGING 
 def save_feedback(input_text, output_text, feedback_type):
-    if not input_text or not output_text:
-        return "⚠️ Errore: Analizza prima un tweet!"
+    if not input_text or not output_text or "Sentiment:" not in output_text:
+        return "Errore: Analizza un tweet prima di inviare il feedback!"
     
-    new_data = {
-        "timestamp": [datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
-        "input": [input_text],
-        "output": [output_text],
-        "flag": [feedback_type]
-    }
-    df_new = pd.DataFrame(new_data)
-    
-    # Scrittura su file CSV
-    if not os.path.isfile(LOG_FILE):
-        df_new.to_csv(LOG_FILE, index=False)
-    else:
-        df_new.to_csv(LOG_FILE, mode='a', header=False, index=False)
-    
-    return f"✅ Feedback '{feedback_type}' registrato correttamente!"
+    try:
+        new_data = {
+            "timestamp": [datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
+            "input": [input_text],
+            "output": [output_text],
+            "flag": [str(feedback_type)] 
+        }
+        df_new = pd.DataFrame(new_data)
+        
+        if not os.path.isfile(LOG_FILE):
+            df_new.to_csv(LOG_FILE, index=False)
+        else:
+            df_new.to_csv(LOG_FILE, mode='a', header=False, index=False)
+        
+        return f"Feedback '{feedback_type}' registrato correttamente!"
+    except Exception as e:
+        return f"Errore nel salvataggio: {e}"
 
 def get_monitoring_chart():
     if not os.path.exists(LOG_FILE):
@@ -89,8 +91,13 @@ with gr.Blocks() as demo:
             flag_ok = gr.Button("Corretto")
         
         # Salvataggio feedback
-        flag_err.click(fn=save_feedback, inputs=[input_text, output_text, gr.State("Errore")], outputs=feedback_msg)
-        flag_ok.click(fn=save_feedback, inputs=[input_text, output_text, gr.State("OK")], outputs=feedback_msg)
+        flag_err.click(fn=lambda i, o: save_feedback(i, o, "Errore"), 
+                      inputs=[input_text, output_text], 
+                      outputs=feedback_msg)
+        
+        flag_ok.click(fn=lambda i, o: save_feedback(i, o, "OK"), 
+                     inputs=[input_text, output_text], 
+                     outputs=feedback_msg)
         
         reset_btn.click(reset_inputs, None, [input_text, output_text, feedback_msg])
 

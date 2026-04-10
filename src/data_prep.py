@@ -4,10 +4,6 @@ from transformers import AutoTokenizer
 from torch.utils.data import DataLoader
 from utils import setup_device
 
-def setup_device():
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    return device
-
 def prepare_dataloaders(model_name="cardiffnlp/twitter-roberta-base-sentiment-latest", 
                         batch_size=16, 
                         max_length=128):

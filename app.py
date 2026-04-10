@@ -3,10 +3,18 @@ from transformers import pipeline
 import pandas as pd
 import plotly.express as px
 import os
+from datetime import datetime
 
-# Caricamento Modello (Lazy Loading per evitare timeout)
+# Configurazione Percorsi
+LOG_DIR = "flagged"
+LOG_FILE = os.path.join(LOG_DIR, "logs.csv")
+
+# Crea la cartella se non esiste all'avvio
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
+
+# Caricamento Modello
 analyzer = None
-LOG_FILE = "flagged/log.csv" 
 
 def predict(text):
     global analyzer
@@ -17,29 +25,48 @@ def predict(text):
     results = analyzer(text)[0]
     return f"Sentiment: {results['label']} (Confidenza: {results['score']:.2%})"
 
-def reset_inputs():
-    return "", "", "Pronto per l'analisi."
+# FUNZIONE DI LOGGING MANUALE (Più sicura per Hugging Face)
+def save_feedback(input_text, output_text, feedback_type):
+    if not input_text or not output_text:
+        return "⚠️ Errore: Analizza prima un tweet!"
+    
+    new_data = {
+        "timestamp": [datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
+        "input": [input_text],
+        "output": [output_text],
+        "flag": [feedback_type]
+    }
+    df_new = pd.DataFrame(new_data)
+    
+    # Scrittura su file CSV
+    if not os.path.isfile(LOG_FILE):
+        df_new.to_csv(LOG_FILE, index=False)
+    else:
+        df_new.to_csv(LOG_FILE, mode='a', header=False, index=False)
+    
+    return f"✅ Feedback '{feedback_type}' registrato correttamente!"
 
-# Funzione per il Monitoraggio Visivo
 def get_monitoring_chart():
     if not os.path.exists(LOG_FILE):
         return None
     try:
         df = pd.read_csv(LOG_FILE)
-        if 'flag' in df.columns:
+        if not df.empty and 'flag' in df.columns:
             counts = df['flag'].value_counts().reset_index()
             counts.columns = ['Feedback', 'Conteggio']
-            # Creazione grafico a barre colorato
             fig = px.bar(counts, x='Feedback', y='Conteggio', 
                          title="Monitoraggio Performance (Feedback Utenti)",
                          color='Feedback',
                          color_discrete_map={'Errore': '#ef553b', 'OK': '#00cc96'})
             return fig
-    except:
-        return None
+    except Exception as e:
+        print(f"Errore grafico: {e}")
     return None
 
-# Interfaccia Gradio
+def reset_inputs():
+    return "", "", "Pronto per l'analisi."
+
+# Interfaccia
 with gr.Blocks() as demo:
     gr.Markdown("# 🛰️ Sentiment AI Radar & Monitoring")
     
@@ -56,31 +83,21 @@ with gr.Blocks() as demo:
         
         submit_btn.click(predict, input_text, output_text)
         
-        # Setup del sistema di logging automatico di Gradio
-        callback = gr.CSVLogger()
-        callback.setup([input_text, output_text], "flagged")
-        
         gr.Markdown("### Valuta la qualità del modello (Monitoraggio Attivo)")
         with gr.Row():
             flag_err = gr.Button("Errato")
             flag_ok = gr.Button("Corretto")
         
-        # Azioni di Flag con messaggio di conferma
-        flag_err.click(lambda *args: (callback.flag(args, flag_option="Errore"), "Feedback 'Errato' registrato!"), 
-                      [input_text, output_text], [feedback_msg, feedback_msg])
+        # Salvataggio feedback
+        flag_err.click(fn=save_feedback, inputs=[input_text, output_text, gr.State("Errore")], outputs=feedback_msg)
+        flag_ok.click(fn=save_feedback, inputs=[input_text, output_text, gr.State("OK")], outputs=feedback_msg)
         
-        flag_ok.click(lambda *args: (callback.flag(args, flag_option="OK"), "Feedback 'Corretto' registrato!"), 
-                     [input_text, output_text], [feedback_msg, feedback_msg])
-        
-        # Reset delle caselle
         reset_btn.click(reset_inputs, None, [input_text, output_text, feedback_msg])
 
     with gr.Tab("Dashboard Monitoraggio"):
         gr.Markdown("### Statistiche di Performance in Tempo Reale")
-        refresh_btn = gr.Button("Aggiorna Grafico", variant="primary")
+        refresh_btn = gr.Button("🔄 Aggiorna Grafico", variant="primary")
         plot = gr.Plot()
-        
-        # Aggiorna il grafico leggendo il CSV generato dai flag
         refresh_btn.click(get_monitoring_chart, None, plot)
 
 if __name__ == "__main__":

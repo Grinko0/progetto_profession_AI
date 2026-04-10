@@ -1,15 +1,18 @@
+import os  
 import torch
 from torch.optim import AdamW
 from transformers import get_scheduler
 from transformers import AutoTokenizer
 import evaluate
 from tqdm.auto import tqdm
+
 from data_prep import prepare_dataloaders
 from model_init import initialize_model
+from utils import setup_device
 
-def train_model(epochs=3, max_batches_per_epoch=10):
+def train_model(epochs=3, max_batches_per_epoch=None): 
     # Modello e Dati
-    print("[INFO] Preparazione Dati e Modello in corso...")
+    print("Preparazione Dati e Modello in corso...")
     train_dl, eval_dl, _, _ = prepare_dataloaders(batch_size=16)
     model, device = initialize_model()
 
@@ -29,7 +32,7 @@ def train_model(epochs=3, max_batches_per_epoch=10):
     metric_acc = evaluate.load("accuracy")
     metric_f1 = evaluate.load("f1")
 
-    print(f"\n[INFO] INIZIO ADDESTRAMENTO ({epochs} Epoche)")
+    print(f"\nINIZIO ADDESTRAMENTO ({epochs} Epoche)")
     
     # TRAINING LOOP 
     for epoch in range(epochs):
@@ -92,7 +95,7 @@ def train_model(epochs=3, max_batches_per_epoch=10):
         print(f"Accuracy: {acc_result['accuracy']:.4f}")
         print(f"F1-Score (Macro): {f1_result['f1']:.4f}")
 
-    # 5. Salvataggio del modello addestrato
+    # Salvataggio del modello addestrato
     print("\nSalvataggio del modello e del tokenizer in './saved_model'...")
     model.save_pretrained("./saved_model")
    
@@ -100,5 +103,22 @@ def train_model(epochs=3, max_batches_per_epoch=10):
     print("Addestramento completato!")
 
 if __name__ == "__main__":
-    # Avviamo il training loop. Di default è limitato a 10 batch/epoca per test su CPU.
-    train_model(epochs=1, max_batches_per_epoch=10)
+    '''
+    Ho implementato un sistema dinamico che adatta l'addestramento all'ambiente di esecuzione tramite il rilevamento delle variabili d'ambiente. 
+    Quando il codice gira su  Actions, esegue in uno "smoke test" limitato a soli 10 batch 
+    al fine di validare velocemente l'assenza di errori di sintassi nell'infrastruttura. 
+    Tuttavia, se eseguito in locale o in produzione, 
+    il limite decade da solo per permettere un training completo reale ed esaustivo sull'intero dataset.
+
+    '''
+    
+    IS_SMOKE_TEST = os.environ.get("CI") == "true"
+
+    if IS_SMOKE_TEST:
+        print("Esecuzione su GitHub Actions rilevata.")
+        print("Eseguo uno SMOKE TEST veloce (1 epoca, 10 batch) per validare il codice.")
+        train_model(epochs=1, max_batches_per_epoch=10)
+    else:
+        print("Esecuzione locale/server rilevata.")
+        print("Eseguo il FULL TRAINING sull'intero dataset (3 epoche).")
+        train_model(epochs=3, max_batches_per_epoch=None)

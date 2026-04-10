@@ -5,6 +5,8 @@ matplotlib
 seaborn
 datasets
 evaluate
+plotly
+pandas
 scikit-learn
 tqdm
 huggingface_hub>=1.0.0

@@ -56,8 +56,9 @@ jobs:
         git config --global user.email "actions@github.com"
         git config --global user.name "GitHub Actions"
         
+        # Questo comando rimuove il 'remote' se esiste già
+        git remote remove hf || true
+        
+        # Aggiunge il remote e invia il codice
         git remote add hf https://huggingface.co/spaces/Grinko/sentiment-analysis-mlops
         git push --force https://Grinko:$HF_TOKEN@huggingface.co/spaces/Grinko/sentiment-analysis-mlops main
-        
-        git remote add hf https://huggingface.co/spaces/TUO_USER/TUO_SPACE
-        git push --force https://TUO_USER:$HF_TOKEN@huggingface.co/spaces/TUO_USER/TUO_SPACE main

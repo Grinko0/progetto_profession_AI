@@ -2,6 +2,7 @@ import torch
 from datasets import load_dataset
 from transformers import AutoTokenizer
 from torch.utils.data import DataLoader
+from utils import setup_device
 
 def setup_device():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'

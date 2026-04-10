@@ -13,6 +13,8 @@ jobs:
     steps:
     - name: 1. Checkout del codice dal Repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 
 
     - name: 2. Setup di Python (Versione 3.10)
       uses: actions/setup-python@v4
@@ -47,12 +49,15 @@ jobs:
           plots/
           saved_model/
 
-    - name: 8. Deploy e Sync Monitoraggio (Fase 3)
+    - name: 8. Deploy e Sync con Hugging Face Spaces
       env:
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
       run: |
         git config --global user.email "actions@github.com"
         git config --global user.name "GitHub Actions"
+        
+        git remote add hf https://huggingface.co/spaces/Grinko/sentiment-analysis-mlops
+        git push --force https://Grinko:$HF_TOKEN@huggingface.co/spaces/Grinko/sentiment-analysis-mlops main
         
         git remote add hf https://huggingface.co/spaces/TUO_USER/TUO_SPACE
         git push --force https://TUO_USER:$HF_TOKEN@huggingface.co/spaces/TUO_USER/TUO_SPACE main

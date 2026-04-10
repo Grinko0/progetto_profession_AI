@@ -1,45 +1,25 @@
 import gradio as gr
 from transformers import pipeline
-import datetime
-import csv
-import os
 
-LOG_FILE = "monitoring_logs.csv"
-
-def log_inference(text, sentiment, confidence):
-    """Registra ogni predizione per il monitoraggio continuo"""
-    file_exists = os.path.isfile(LOG_FILE)
-    with open(LOG_FILE, mode='a', newline='', encoding='utf-8') as f:
-        writer = csv.writer(f)
-        if not file_exists:
-            writer.writerow(["Timestamp", "Text", "Sentiment", "Confidence"])
-        writer.writerow([datetime.datetime.now(), text, sentiment, confidence])
-
-# MODELLO 
+# Modello
 model_name = "cardiffnlp/twitter-roberta-base-sentiment-latest"
 analyzer = pipeline("sentiment-analysis", model=model_name)
 
 def predict(text):
     if not text.strip(): return "Inserisci del testo."
-    
     results = analyzer(text)[0]
-    label = results['label']
-    score = results['score']
-    
+    return f"Sentiment: {results['label']} (Confidenza: {results['score']:.2%})"
 
-    log_inference(text, label, score)
-    
-    return f"Sentiment: {label} (Confidenza: {score:.2%})"
-
-# INTERFACCIA GRADIO 
+# SISTEMA DI MONITORAGGIO 
 demo = gr.Interface(
     fn=predict,
-    inputs=gr.Textbox(label="Inserisci un tweet in inglese", placeholder="Esempio: I love MLOps!"),
+    inputs=gr.Textbox(label="Inserisci un tweet in inglese"),
     outputs=gr.Text(label="Risultato Analisi"),
-    title="MachineInnovators - Sentiment AI Radar",
-    description="Sistema di monitoraggio live delle performance del modello.",
-    allow_flagging="manual", # Permette agli utenti di segnalare errori (Monitoring)
-    flagging_options=["Errore Sentiment", "Bassa Confidenza"]
+    title="Sentiment AI Radar",
+
+    allow_flagging="manual", 
+    flagging_options=["Predizione Errata", "Sentiment Non Chiaro", "Tutto OK"]
 )
 
-demo.launch()
+if __name__ == "__main__":
+    demo.launch(server_name="0.0.0.0", server_port=7860)

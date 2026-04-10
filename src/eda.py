@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datasets import load_dataset
+from utils import setup_device
 
 def setup_device():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'

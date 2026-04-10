@@ -1,1 +1,9 @@
-torch pandas matplotlib seaborn datasets
+torch
+transformers
+pandas
+matplotlib
+seaborn
+datasets
+evaluate
+scikit-learn
+tqdm

@@ -1,8 +1,5 @@
 name: MLOps Sentiment Analysis CI/CD
 
-# Quando deve partire questa pipeline?
-# 1. Ogni volta che facciamo un "push" (carichiamo nuovo codice) sul branch main
-# 2. Ogni volta che apriamo una Pull Request
 on:
   push:
     branches: [ "main" ]
@@ -11,7 +8,6 @@ on:
 
 jobs:
   build-and-test:
-    # Usiamo l'ambiente virtuale standard fornito da GitHub
     runs-on: ubuntu-latest
 
     steps:
@@ -26,8 +22,7 @@ jobs:
     - name: 3. Installazione delle dipendenze (Librerie ML)
       run: |
         python -m pip install --upgrade pip
-        # Installiamo le librerie esatte che abbiamo usato finora
-        pip install torch pandas matplotlib seaborn datasets transformers evaluate scikit-learn tqdm
+        pip install -r requirements.txt
 
     - name: 4. Esecuzione Analisi Esplorativa (EDA)
       run: |
@@ -40,17 +35,24 @@ jobs:
         python src/data_prep.py
 
     - name: 6. Esecuzione Training Loop (Smoke Test)
-      # Nota: il nostro script 'train.py' ha già il limite di 10 batch, 
-      # perfetto per non far andare in timeout il runner gratuito di GitHub.
       run: |
         echo "[CI] Avvio Addestramento di test..."
         python src/train.py
 
     - name: 7. Salvataggio degli artefatti (Grafici e Modello)
-      # Salviamo i file generati per poterli scaricare e analizzare
       uses: actions/upload-artifact@v4
       with:
         name: mlops-artifacts
         path: |
           plots/
           saved_model/
+
+    - name: 8. Deploy e Sync Monitoraggio (Fase 3)
+      env:
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      run: |
+        git config --global user.email "actions@github.com"
+        git config --global user.name "GitHub Actions"
+        
+        git remote add hf https://huggingface.co/spaces/TUO_USER/TUO_SPACE
+        git push --force https://TUO_USER:$HF_TOKEN@huggingface.co/spaces/TUO_USER/TUO_SPACE main

@@ -10,15 +10,12 @@ def setup_device():
 def prepare_dataloaders(model_name="cardiffnlp/twitter-roberta-base-sentiment-latest", 
                         batch_size=16, 
                         max_length=128):
-    # Caricamento del dataset testuale
-    print("[INFO] Caricamento del dataset tweet_eval...")
+    print("Caricamento del dataset tweet_eval...")
     dataset = load_dataset("tweet_eval", "sentiment")
 
-    # Inizializzazione del Tokenizzatore
     print(f"[INFO] Download del tokenizzatore per {model_name}...")
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    # Funzione di Tokenizzazione
     def tokenize_function(examples):
         return tokenizer(
             examples["text"],
@@ -27,14 +24,12 @@ def prepare_dataloaders(model_name="cardiffnlp/twitter-roberta-base-sentiment-la
             max_length=max_length
         )
 
-    # Mappatura sul dataset 
+
     print("[INFO] Tokenizzazione del dataset in corso...")
     tokenized_datasets = dataset.map(tokenize_function, batched=True)
 
-    # Formattazione per l'addestramento con PyTorch
     tokenized_datasets = tokenized_datasets.remove_columns(["text"])
     tokenized_datasets = tokenized_datasets.rename_column("label", "labels")
-    # Convertiamo le liste Python in tensori PyTorch
     tokenized_datasets.set_format("torch")
 
     # DataLoaders
@@ -49,12 +44,11 @@ def prepare_dataloaders(model_name="cardiffnlp/twitter-roberta-base-sentiment-la
 device = setup_device()
 print(f"Esecuzione sul device: {device}")
     
-    # eseguo la pipeline per testarla
 train_dl, eval_dl, test_dl, tokenizer = prepare_dataloaders()
     
 for batch in train_dl:
    print("\n[VERIFICA DEL BATCH PER IL MODELLO]")
    print(f"Dimensioni input_ids (Batch Size, Max Length): {batch['input_ids'].shape}")
-   print(f"Dimensioni attention_mask: {batch['attention_mask'].shape}"
+   print(f"Dimensioni attention_mask: {batch['attention_mask'].shape}") 
    print(f"Dimensioni labels: {batch['labels'].shape}")
-   break 
+   break

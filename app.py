@@ -48,27 +48,28 @@ def save_feedback(input_text, output_text, feedback_type):
     except Exception as e:
         return f"Errore nel salvataggio: {e}"
 
-def get_monitoring_chart():
+def get_monitoring_data():
     if not os.path.exists(LOG_FILE):
-        return None
+        return None, pd.DataFrame({"Stato": ["Nessun file CSV trovato"]})
+    
     try:
         df = pd.read_csv(LOG_FILE)
-        if not df.empty and 'flag' in df.columns:
-            counts = df['flag'].value_counts().reset_index()
-            counts.columns = ['Feedback', 'Conteggio']
-            fig = px.bar(counts, x='Feedback', y='Conteggio', 
-                         title="Monitoraggio Performance (Feedback Utenti)",
-                         color='Feedback',
-                         color_discrete_map={'Errore': '#ef553b', 'OK': '#00cc96'})
-            return fig
+        if df.empty or 'flag' not in df.columns:
+            return None, pd.DataFrame({"Stato": ["File CSV esiste ma è vuoto o corrotto"]})
+   
+        counts = df['flag'].value_counts().reset_index()
+        counts.columns = ['Feedback', 'Conteggio']
+        
+        return counts, df
     except Exception as e:
-        print(f"Errore grafico: {e}")
-    return None
+        return None, pd.DataFrame({"Errore": [str(e)]})
 
 def reset_inputs():
     return "", "", "Pronto per l'analisi."
 
 # Interfaccia
+# ... (lascia intatte le funzioni predict, save_feedback e get_monitoring_data qui sopra) ...
+
 with gr.Blocks() as demo:
     gr.Markdown("# 🛰️ Sentiment AI Radar & Monitoring")
     
@@ -87,8 +88,8 @@ with gr.Blocks() as demo:
         
         gr.Markdown("### Valuta la qualità del modello (Monitoraggio Attivo)")
         with gr.Row():
-            flag_err = gr.Button("Errato")
-            flag_ok = gr.Button("Corretto")
+            flag_err = gr.Button("❌ Errato")
+            flag_ok = gr.Button("✅ Corretto")
         
         # Salvataggio feedback
         flag_err.click(fn=lambda i, o: save_feedback(i, o, "Errore"), 
@@ -103,9 +104,22 @@ with gr.Blocks() as demo:
 
     with gr.Tab("Dashboard Monitoraggio"):
         gr.Markdown("### Statistiche di Performance in Tempo Reale")
-        refresh_btn = gr.Button("🔄 Aggiorna Grafico", variant="primary")
-        plot = gr.Plot()
-        refresh_btn.click(get_monitoring_chart, None, plot)
+        btn_refresh = gr.Button("🔄 AGGIORNA DASHBOARD", variant="primary")
+        
+        with gr.Row():
+            plot_area = gr.BarPlot(
+                x="Feedback", 
+                y="Conteggio", 
+                title="Distribuzione Feedback", 
+                color="Feedback",
+                tooltip=["Feedback", "Conteggio"],
+                y_title="Numero di Segnalazioni",
+                x_title="Tipo di Feedback"
+            )
+    
+            data_table = gr.Dataframe(label="Ispezione Dati CSV (Verità di base)")
+ 
+        btn_refresh.click(get_monitoring_data, None, [plot_area, data_table])
 
 if __name__ == "__main__":
     demo.launch()

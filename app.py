@@ -1,7 +1,6 @@
 import gradio as gr
 from transformers import pipeline
 import pandas as pd
-import plotly.express as px
 import os
 from datetime import datetime
 

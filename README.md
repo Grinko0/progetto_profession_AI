@@ -56,6 +56,10 @@ Per soddisfare il requisito del monitoraggio continuo della reputazione, non bas
 Su Hugging Face, i server cloud si resettano spesso (ephemeral storage), il che mi faceva perdere i file CSV dei log di monitoraggio. Inoltre, i grafici Plotly si bloccavano spesso a causa delle policy sugli iframe.
 Per risolvere, ho scritto una funzione personalizzata in `pandas` che forza la scrittura su disco del file CSV ad ogni singolo feedback. Per il lato visivo, ho sostituito Plotly con il componente nativo `gr.BarPlot` di Gradio, affiancandogli una tabella dati (`gr.Dataframe`) per poter ispezionare visivamente i log crudi in tempo reale, assicurandomi che il salvataggio funzioni sempre.
 
+**Architettura di Storage su Hugging Face:**
+Essendo che l'applicazione è implementata con la versione gratuita di Hugging Face Spaces, l'infrastruttura è soggetta a spegnimento per inattività . Al riavvio, il container viene ricreato ex-novo, causando la perdita dei file locali come il `log.csv`. 
+In un ambiente di produzione aziendale reale, questa limitazione viene superata disaccoppiando lo storage: il blocco di codice relativo a `save_feedback` verrebbe reindirizzato per effettuare chiamate API  verso un Storage esterno, garantendo la persistenza. 
+
 ---
 
 ## Retraining Automatico

@@ -10,47 +10,60 @@ python_version: "3.10"
 pinned: false
 ---
 
+# Progetto Sentiment Analysis MLOps - MachineInnovators Inc.
 
-# Progetto di Sentiment Analysis e Architettura MLOps - MachineInnovators Inc.
+> **Live Demo:** [Applicazione su Hugging Face Spaces](https://grinko-sentiment-analysis-mlops.hf.space)
 
-Questo repository ospita il codice sorgente e l'infrastruttura architetturale per un sistema avanzato di Sentiment Analysis. Il progetto nasce con il duplice obiettivo di sviluppare un modello di Natural Language Processing (NLP) altamente accurato per l'analisi dei testi provenienti dai social media e, contestualmente, di ingegnerizzarne il ciclo di vita seguendo i paradigmi fondanti del Machine Learning Operations (MLOps). L'intera infrastruttura è stata progettata per garantire scalabilità, riproducibilità e automazione dei processi di test e rilascio.
+Benvenuti nel repository del mio progetto. L'obiettivo di questo lavoro è fornire a MLOps Innovators Inc. un sistema automatizzato per l'analisi del sentiment sui social media, permettendo all'azienda di rispondere rapidamente ai feedback degli utenti e gestire in modo proattivo la propria reputazione online. 
 
-## 1. Scelta Tecnologica: Da FastText all'Architettura Transformer (RoBERTa)
+Invece di fermarmi al semplice addestramento di un modello, ho ingegnerizzato l'intero ciclo di vita del software seguendo le metodologie MLOps. Di seguito spiego nel dettaglio le scelte implementative affrontate nelle varie fasi del progetto.
 
-La specifica iniziale del progetto prevedeva l'implementazione di un modello basato su **FastText**. Tuttavia, a seguito di un'analisi sui requisiti di accuratezza necessari per elaborare il linguaggio dei social media, ho ritenuto opportuno effettuare un aggiornamento architetturale verso un modello basato su Transformer, nello specifico **RoBERTa** (versione `cardiffnlp/twitter-roberta-base-sentiment-latest`).
+---
 
-A differenza dei modelli tradizionali che analizzano le parole singolarmente o per n-grammi, l'architettura RoBERTa sfrutta il meccanismo di *Self-Attention* bidirezionale. Questo permette al modello di comprendere il contesto semantico globale della frase, risultando significativamente più efficace nell'individuare sarcasmo, ironia e sfumature di significato complesse tipiche dei tweet.
+## Fase 1: Implementazione del Modello e Gestione Dati
 
-A livello infrastrutturale, per rispettare le best practice di versionamento del codice e i limiti di spazio imposti da Git (100 MB), i pesi del modello (che ammontano a circa 475 MB) sono stati esclusi dal repository tramite `.gitignore`. Il sistema è configurato per scaricare i pesi dinamicamente da un Model Registry esterno (**Hugging Face Hub**) al momento dell'esecuzione.
+**La scelta del modello (FastText vs RoBERTa)**
+Le linee guida iniziali menzionavano l'uso di un modello basato su **FastText**. Tuttavia, il riferimento specifico fornito nei requisiti puntava al modello `cardiffnlp/twitter-roberta-base-sentiment-latest`. Ho deciso di seguire questa seconda indicazione implementando **RoBERTa**, un modello basato su architettura Transformer. 
+Questa scelta si è rivelata molto più solida per i social media: a differenza di FastText, RoBERTa utilizza la *Self-Attention* bidirezionale, riuscendo a comprendere il contesto dell'intera frase. Questo è essenziale per cogliere sfumature, ironia e sarcasmo, mantenendo alta l'accuratezza predittiva.
 
-## 2. Ingegnerizzazione del Codice e Sviluppo Modulare
+**Dataset e Preparazione**
+Ho utilizzato un dataset pubblico contenente testi estratti dai social media, già etichettati in tre classi (Positivo, Neutro, Negativo). Il codice per la preparazione dei dati (`src/data_prep.py`) si occupa di pulire i testi e tokenizzarli nel formato tensoriale richiesto dal Transformer.
 
-Per favorire la manutenibilità e la transizione da un ambiente di pura ricerca (Jupyter Notebook) a uno di produzione, il codice sorgente è stato fattorizzato in script Python modulari, contenuti all'interno della directory `src/`:
+---
 
-* **`eda.py` (Exploratory Data Analysis):** Automatizza l'analisi preliminare del dataset, valutando la distribuzione delle classi di sentiment (Positivo, Neutro, Negativo) e le caratteristiche testuali. Questo passaggio è cruciale per prevenire bias di addestramento dovuti a classi sbilanciate.
-* **`data_prep.py`:** Gestisce la pipeline di pre-processing. Si occupa della pulizia del testo e, soprattutto, dell'istanziazione del tokenizer specifico di RoBERTa, trasformando le stringhe di testo in tensori PyTorch ottimizzati per l'addestramento.
-* **`train.py`:** Contiene la logica di addestramento e valutazione. Implementa un sistema di monitoraggio statico che, al termine del processo, calcola e registra metriche fondamentali come l'Accuracy globale e il F1-Score (valutato in modalità macro per tenere conto di eventuali sbilanciamenti minori tra le classi).
+## Fase 2: Creazione della Pipeline CI/CD
 
-## 3. Continuous Integration e Automazione (GitHub Actions)
+Per garantire l'affidabilità del codice, ho sviluppato una pipeline automatizzata utilizzando **GitHub Actions**. Ad ogni push sul repository, la pipeline configura l'ambiente, installa le dipendenze e lancia i test di integrazione per verificare che l'addestramento e il deploy possano avvenire senza errori.
 
-Il cuore della metodologia MLOps di questo progetto risiede nell'implementazione di una pipeline di Continuous Integration, definita nel file `.github/workflows/mlops_pipeline.yml`.
+**L'errore affrontato e risolto (Lo "Smoke Test")**
+Durante lo sviluppo, è emerso un problema: l'addestramento del modello nella pipeline CI era limitato a soli 10 batch. Questo andava benissimo come *smoke test* per verificare che il codice non andasse in crash, ma non permetteva un addestramento reale del modello.
+Per risolvere questo problema in modo elegante, ho reso lo script di training (`train.py`) **"context-aware"**. Ho inserito un controllo sulla variabile d'ambiente `CI=true` (iniettata automaticamente da GitHub). 
+* Se il codice gira su GitHub, esegue lo smoke test veloce (10 batch) per risparmiare risorse e tempo.
+* Se il codice gira in locale o in produzione, il limite viene rimosso automaticamente e parte il *full training* sull'intero dataset.
 
-L'obiettivo di questa pipeline è fungere da *Quality Gate* automatizzato. Ad ogni push sul branch principale, l'infrastruttura di GitHub alloca un ambiente virtuale sterile in cui:
+---
 
-* Viene configurato un ambiente Python controllato (versione 3.10).
-* Vengono installate le dipendenze deterministiche definite nel file `requirements.txt`.
-* Viene eseguita l'intera suite di script (`eda.py`, `data_prep.py`, `train.py`) come *Smoke Test*.
+## Fase 3: Deploy e Monitoraggio Continuo della Reputazione
 
-Questo approccio garantisce che nessuna modifica al codice possa essere integrata se genera regressioni o errori di compilazione, proteggendo l'integrità del sistema in produzione.
+**Deploy su Hugging Face**
+Ho disaccoppiato il versionamento dal deploy: il codice vive su GitHub, ma l'applicazione è ospitata su **Hugging Face Spaces**. Tramite la libreria **Gradio**, ho creato un'interfaccia web che permette di testare il modello in tempo reale.
 
-## 4. Deploy Disaccoppiato e Interfaccia Utente
+**Sistema di Monitoraggio e HitL (Human-in-the-Loop)**
+Per soddisfare il requisito del monitoraggio continuo della reputazione, non bastava fare inferenza. Ho aggiunto una dashboard interattiva all'app, permettendo agli utenti di fornire un feedback sulle predizioni (cliccando su "Corretto" o "Errato"). Questo mi permette di valutare continuamente le performance del modello sul campo e di accorgermi subito se la percezione dell'azienda cambia (Data Drift).
 
-In conformità con i principi di microservizi e separazione delle responsabilità (decoupling), il repository GitHub è stato dedicato esclusivamente al versionamento del codice e ai test. Il deployment dell'applicazione finale è stato invece affidato a un'infrastruttura cloud esterna ottimizzata per il Machine Learning: **Hugging Face Spaces**.
+**L'errore affrontato e risolto (I log fantasma)**
+Su Hugging Face, i server cloud si resettano spesso (ephemeral storage), il che mi faceva perdere i file CSV dei log di monitoraggio. Inoltre, i grafici Plotly si bloccavano spesso a causa delle policy sugli iframe.
+Per risolvere, ho scritto una funzione personalizzata in `pandas` che forza la scrittura su disco del file CSV ad ogni singolo feedback. Per il lato visivo, ho sostituito Plotly con il componente nativo `gr.BarPlot` di Gradio, affiancandogli una tabella dati (`gr.Dataframe`) per poter ispezionare visivamente i log crudi in tempo reale, assicurandomi che il salvataggio funzioni sempre.
 
-L'applicazione in produzione utilizza la libreria **Gradio** per fornire un'interfaccia utente web accessibile e interattiva. Il server istanzia dinamicamente la pipeline di inferenza, recupera il modello RoBERTa e permette l'elaborazione del sentiment in tempo reale, restituendo all'utente una valutazione probabilistica (Confidence Score) associata alla classe di appartenenza.
+---
 
-# Progetto di Sentiment Analysis e Architettura MLOps - MachineInnovators Inc.
+## Verso il Retraining Automatico
 
-> Modello su Hugging Face: [Sentiment Analysis App su Hugging Face Spaces](https://grinko-sentiment-analysis-mlops.hf.space)
+Il sistema di monitoraggio che ho implementato pone le basi esatte per il requisito del **Retraining del Modello**. Tutti i testi che vengono etichettati come "Errati" tramite i bottoni di feedback vengono salvati nel log. Questi dati non sono scarti, ma costituiscono il nuovo dataset etichettato che verrà utilizzato per ri-addestrare dinamicamente il modello. In questo modo, l'algoritmo potrà adattarsi continuamente ai nuovi slang e ai cambiamenti nei comportamenti degli utenti sui social media, mantenendo l'accuratezza sempre ai massimi livelli.
 
+---
+
+## Consegna e Materiale
+* Il codice sorgente documentato è interamente disponibile in questo repository GitHub.
+* La consegna formale del progetto viene effettuata tramite il notebook **Google Colab** allegato, che contiene il link diretto a questo repository e le istruzioni per l'avvio.
 

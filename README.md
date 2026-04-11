@@ -14,7 +14,7 @@ pinned: false
 
 > **Live Demo:** [Applicazione su Hugging Face Spaces](https://grinko-sentiment-analysis-mlops.hf.space)
 
-Benvenuti nel repository del mio progetto. L'obiettivo di questo lavoro è fornire a MLOps Innovators Inc. un sistema automatizzato per l'analisi del sentiment sui social media, permettendo all'azienda di rispondere rapidamente ai feedback degli utenti e gestire in modo proattivo la propria reputazione online. 
+L'obiettivo di questo lavoro è fornire a MLOps Innovators Inc. un sistema automatizzato per l'analisi del sentiment sui social media, permettendo all'azienda di rispondere rapidamente ai feedback degli utenti e gestire in modo proattivo la propria reputazione online. 
 
 Invece di fermarmi al semplice addestramento di un modello, ho ingegnerizzato l'intero ciclo di vita del software seguendo le metodologie MLOps. Di seguito spiego nel dettaglio le scelte implementative affrontate nelle varie fasi del progetto.
 
@@ -22,9 +22,10 @@ Invece di fermarmi al semplice addestramento di un modello, ho ingegnerizzato l'
 
 ## Fase 1: Implementazione del Modello e Gestione Dati
 
-**La scelta del modello (FastText vs RoBERTa)**
-Le linee guida iniziali menzionavano l'uso di un modello basato su **FastText**. Tuttavia, il riferimento specifico fornito nei requisiti puntava al modello `cardiffnlp/twitter-roberta-base-sentiment-latest`. Ho deciso di seguire questa seconda indicazione implementando **RoBERTa**, un modello basato su architettura Transformer. 
-Questa scelta si è rivelata molto più solida per i social media: a differenza di FastText, RoBERTa utilizza la *Self-Attention* bidirezionale, riuscendo a comprendere il contesto dell'intera frase. Questo è essenziale per cogliere sfumature, ironia e sarcasmo, mantenendo alta l'accuratezza predittiva.
+**La scelta del modello: Da FastText a RoBERTa**
+Per l'implementazione del modello di analisi, sono partito dalle specifiche iniziali che prevedevano l'uso di **FastText**. Tuttavia, analizzando la complessità del linguaggio tipico dei social media, ho deciso di effettuare un upgrade architetturale proattivo implementando **RoBERTa** (nello specifico il modello pre-addestrato `cardiffnlp/twitter-roberta-base-sentiment-latest`). 
+
+Questa scelta si è rivelata decisamente più solida in produzione: a differenza di FastText, che valuta le parole o i piccoli gruppi di parole in modo più isolato, l'architettura Transformer di RoBERTa sfrutta la *Self-Attention* bidirezionale. In questo modo il modello riesce a comprendere il contesto globale dell'intera frase, un elemento assolutamente essenziale per riuscire a cogliere le sfumature, l'ironia e il sarcasmo tipici degli utenti online, garantendo così un'accuratezza predittiva molto più elevata.
 
 **Dataset e Preparazione**
 Ho utilizzato un dataset pubblico contenente testi estratti dai social media, già etichettati in tre classi (Positivo, Neutro, Negativo). Il codice per la preparazione dei dati (`src/data_prep.py`) si occupa di pulire i testi e tokenizzarli nel formato tensoriale richiesto dal Transformer.
@@ -57,13 +58,8 @@ Per risolvere, ho scritto una funzione personalizzata in `pandas` che forza la s
 
 ---
 
-## Verso il Retraining Automatico
+## Retraining Automatico
 
 Il sistema di monitoraggio che ho implementato pone le basi esatte per il requisito del **Retraining del Modello**. Tutti i testi che vengono etichettati come "Errati" tramite i bottoni di feedback vengono salvati nel log. Questi dati non sono scarti, ma costituiscono il nuovo dataset etichettato che verrà utilizzato per ri-addestrare dinamicamente il modello. In questo modo, l'algoritmo potrà adattarsi continuamente ai nuovi slang e ai cambiamenti nei comportamenti degli utenti sui social media, mantenendo l'accuratezza sempre ai massimi livelli.
 
 ---
-
-## Consegna e Materiale
-* Il codice sorgente documentato è interamente disponibile in questo repository GitHub.
-* La consegna formale del progetto viene effettuata tramite il notebook **Google Colab** allegato, che contiene il link diretto a questo repository e le istruzioni per l'avvio.
-

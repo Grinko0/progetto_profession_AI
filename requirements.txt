@@ -1,11 +1,12 @@
 torch
 transformers
+accelerate
 pandas
 matplotlib
 seaborn
 datasets
 evaluate
-pandas
 scikit-learn
 tqdm
+gradio
 huggingface_hub>=1.0.0
